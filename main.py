@@ -116,11 +116,15 @@ def get_and_crop_img(img_url):
     img = Image.open(BytesIO(img_response.content))
     final_img = img.crop(img.getbbox())  
     return final_img
-  
 
 @client.event
 async def on_ready():
     print(f"We have logged in as {client.user}")
+    print("We are currently in the following guilds (servers):")
+    for guild in client.guilds:
+        print(f"{guild.name} - {guild.id}")
+    # How to leave a guild (server):
+    # await client.get_guild(id_integer).leave()
 
 @client.event
 async def on_message(message):
