@@ -1,4 +1,4 @@
-#TODO Rework reddit command; allow users to provide subreddit.
+#TODO Rework reddit command; allow users to provide specific subreddit.
 #TODO Implement other entertaining APIs
 #TODO Add support for non-US realms in get_char_profile() and get_char_media()
 #TODO Make use of Repl.it db in some way
@@ -15,8 +15,10 @@ from keep_alive import keep_alive
 from PIL import Image
 from io import BytesIO
 
+# Set "Playing" status. Apparently custom statuses do not work for bots (yet?).
 client = discord.Client(activity=discord.Game(name='with Python'))
 
+# Reddit credentials
 reddit = praw.Reddit(
     client_id = os.getenv('REDDIT_ID'),
     client_secret = os.getenv('REDDIT_SECRET'),
@@ -25,6 +27,7 @@ reddit = praw.Reddit(
     user_agent = os.getenv('REDDIT_USER_AGENT')
     )
 
+# Placeholder for list of subreddits to pull submissions from. Currently reworking the command which uses this variable.
 subreddits = os.getenv('SUBREDDITS').split()
 
 # Background task which runs every 5 minutes to update the Blizzard token. Would be nice to not have to use a global variable though.
@@ -37,13 +40,15 @@ async def bg_get_blizz_token():
         global BLIZZARD_TOKEN
         BLIZZARD_TOKEN = get_token_json['access_token']
         await asyncio.sleep(300)
-    
+
+# Provides a random, inspirational quote
 def get_quote():
     response = requests.get('https://zenquotes.io/api/random')
     json_data = json.loads(response.text)
     quote = json_data[0]['q'] + " -" + json_data[0]['a']
     return quote
 
+# Provides a random dad joke
 def get_dadjoke():
     curl_headers = {'Accept': 'application/json'}
     response = requests.get('https://icanhazdadjoke.com/', headers=curl_headers)
@@ -51,10 +56,12 @@ def get_dadjoke():
     dadjoke = json_data['joke']
     return dadjoke
 
+# Randomly chooses an 8ball response to "answer" the commander
 def get_eightball():
     verdict = random.choice(eightball_answers)
     return verdict
 
+# This big, ugly thing grabs WoW armory data on the provided character/realm. In my defense, this function used to have simple variables, but I wanted to make use of a dictionary.
 def get_char_profile(REALM, CHARACTER, BLIZZARD_TOKEN):
     char_profile_request = requests.get(f'https://us.api.blizzard.com/profile/wow/character/{REALM}/{CHARACTER}?namespace=profile-us&locale=en_US&access_token={BLIZZARD_TOKEN}')
     if char_profile_request.status_code == 200:
@@ -99,6 +106,7 @@ def get_char_profile(REALM, CHARACTER, BLIZZARD_TOKEN):
         char_profile = 'failed'
     return char_profile
 
+# 
 def get_char_media(REALM, CHARACTER, BLIZZARD_TOKEN):
     char_media_request = requests.get(f'https://us.api.blizzard.com/profile/wow/character/{REALM}/{CHARACTER}/character-media?namespace=profile-us&locale=en_US&access_token={BLIZZARD_TOKEN}')
     if char_media_request.status_code == 200:
@@ -111,11 +119,13 @@ def get_char_media(REALM, CHARACTER, BLIZZARD_TOKEN):
         char_media = 'failed'
     return char_media
 
+# Crop image to get rid of empty transparency outside of the model's bounding box
 def get_and_crop_img(img_url):
     img_response = requests.get(img_url)
     img = Image.open(BytesIO(img_response.content))
     final_img = img.crop(img.getbbox())  
     return final_img
+
 
 @client.event
 async def on_ready():
@@ -134,7 +144,7 @@ async def on_message(message):
     user = message.author.display_name
     msg = message.content.lower()
 
-    # Commands
+    # Print list of commands
     if msg.startswith('m!commands') or msg.startswith('m!help'):
         await message.channel.send(command_list)
 
@@ -148,7 +158,7 @@ async def on_message(message):
         dadjoke = get_dadjoke()
         await message.channel.send(dadjoke)
 
-    # Dirty 8-ball (to be retired)
+    # Dirty 8-ball (will probably be retired)
     elif msg.startswith('m!8ball'):
         verdict = get_eightball()
         await message.channel.send(f"{user}: {verdict}")
