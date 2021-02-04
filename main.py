@@ -10,6 +10,7 @@ import json
 import random
 import praw
 import asyncio
+import uuid
 from bot_vars import eightball_answers, command_list
 from keep_alive import keep_alive
 from PIL import Image
@@ -106,13 +107,14 @@ def get_char_profile(REALM, CHARACTER, BLIZZARD_TOKEN):
         char_profile = 'failed'
     return char_profile
 
-# 
+# Grabs character portrait and model (with transparent background) from WoW Armory
 def get_char_media(REALM, CHARACTER, BLIZZARD_TOKEN):
+    unique_id = f"?{uuid.uuid4()}"
     char_media_request = requests.get(f'https://us.api.blizzard.com/profile/wow/character/{REALM}/{CHARACTER}/character-media?namespace=profile-us&locale=en_US&access_token={BLIZZARD_TOKEN}')
     if char_media_request.status_code == 200:
         char_media_json = json.loads(char_media_request.text)
         char_media = {
-            'portrait': char_media_json['assets'][1]['value'],
+            'portrait': f"{char_media_json['assets'][1]['value']}{unique_id}",
             'model': char_media_json['assets'][3]['value']
         }
     else:
