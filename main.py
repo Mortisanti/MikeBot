@@ -1,9 +1,7 @@
 #TODO Rework reddit command; allow users to provide subreddit.
 #TODO Implement other entertaining APIs
 #TODO Add support for non-US realms in get_char_profile() and get_char_media()
-#TODO Check if it's worth running get_char_profile() and get_char_media() on separate threads
 #TODO Make use of Repl.it db in some way
-#TODO POST request for Blizzard token which autoruns once a day
 
 import discord
 import os
@@ -11,6 +9,7 @@ import requests
 import json
 import random
 import praw
+import asyncio
 from bot_vars import eightball_answers, command_list
 from keep_alive import keep_alive
 from PIL import Image
@@ -28,13 +27,17 @@ reddit = praw.Reddit(
 
 subreddits = os.getenv('SUBREDDITS').split()
 
-def get_blizz_token():
-    curl_data = {'grant_type': 'client_credentials'}
-    get_token = requests.post('https://us.battle.net/oauth/token', data=curl_data, auth=(os.getenv('BLIZZARD_ID'), os.getenv('BLIZZARD_SECRET')))
-    get_token_json = json.loads(get_token.text)
-    BLIZZARD_TOKEN = get_token_json['access_token']
-    return BLIZZARD_TOKEN
-
+# Background task which runs every 5 minutes to update the Blizzard token. Would be nice to not have to use a global variable though.
+async def bg_get_blizz_token():
+    await client.wait_until_ready()
+    while True:
+        curl_data = {'grant_type': 'client_credentials'}
+        get_token = requests.post('https://us.battle.net/oauth/token', data=curl_data, auth=(os.getenv('BLIZZARD_ID'), os.getenv('BLIZZARD_SECRET')))
+        get_token_json = json.loads(get_token.text)
+        global BLIZZARD_TOKEN
+        BLIZZARD_TOKEN = get_token_json['access_token']
+        await asyncio.sleep(300)
+    
 def get_quote():
     response = requests.get('https://zenquotes.io/api/random')
     json_data = json.loads(response.text)
@@ -53,7 +56,6 @@ def get_eightball():
     return verdict
 
 def get_char_profile(REALM, CHARACTER, BLIZZARD_TOKEN):
-    # BLIZZARD_TOKEN = get_blizz_token()
     char_profile_request = requests.get(f'https://us.api.blizzard.com/profile/wow/character/{REALM}/{CHARACTER}?namespace=profile-us&locale=en_US&access_token={BLIZZARD_TOKEN}')
     if char_profile_request.status_code == 200:
         char_profile_json = json.loads(char_profile_request.text)
@@ -98,7 +100,6 @@ def get_char_profile(REALM, CHARACTER, BLIZZARD_TOKEN):
     return char_profile
 
 def get_char_media(REALM, CHARACTER, BLIZZARD_TOKEN):
-    # BLIZZARD_TOKEN = get_blizz_token()
     char_media_request = requests.get(f'https://us.api.blizzard.com/profile/wow/character/{REALM}/{CHARACTER}/character-media?namespace=profile-us&locale=en_US&access_token={BLIZZARD_TOKEN}')
     if char_media_request.status_code == 200:
         char_media_json = json.loads(char_media_request.text)
@@ -129,22 +130,26 @@ async def on_message(message):
     user = message.author.display_name
     msg = message.content.lower()
 
-
+    # Commands
     if msg.startswith('m!commands') or msg.startswith('m!help'):
         await message.channel.send(command_list)
 
+    # Inspirational quote
     elif msg.startswith('m!inspire'):
         quote = get_quote()
         await message.channel.send(f"{user}: {quote}")
 
+    # Random dad joke
     elif msg.startswith('m!dadjoke'):
         dadjoke = get_dadjoke()
         await message.channel.send(dadjoke)
 
+    # Dirty 8-ball (to be retired)
     elif msg.startswith('m!8ball'):
         verdict = get_eightball()
         await message.channel.send(f"{user}: {verdict}")
 
+    # WoW character model
     elif msg.startswith('m!wowchar'):
         wowchar_arg = msg.split('m!wowchar ', 1)[1]
         realm_char_query = wowchar_arg.split('/')
@@ -161,6 +166,7 @@ async def on_message(message):
         else:
             await message.channel.send("There was no response from the server. Check your spelling and/or visit https://account.blizzard.com/privacy and ensure that \"Share my game data with community developers\" is enabled under \"Game Data and Profile Privacy\".")
 
+    # WoW character armory and Icy Veins best-in-slot link
     elif msg.startswith('m!armory'):
         armory_arg = msg.split('m!armory ', 1)[1]
         realm_char_query = armory_arg.split('/')
@@ -182,6 +188,7 @@ async def on_message(message):
         else:
             await message.channel.send("There was no response from the server. Check your spelling and/or visit https://account.blizzard.com/privacy and ensure that \"Share my game data with community developers\" is enabled under \"Game Data and Profile Privacy\".")
  
+    # Link to free games updates
     elif msg.startswith('m!freegames'):
         await message.channel.send('https://gamesfree.today/')
 
@@ -210,5 +217,5 @@ async def on_message(message):
     #         await the_message.delete()
 
 keep_alive()
-BLIZZARD_TOKEN = get_blizz_token()
+client.loop.create_task(bg_get_blizz_token())
 client.run(os.getenv('DISCORD_TOKEN'))
