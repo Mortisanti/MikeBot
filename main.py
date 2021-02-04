@@ -15,7 +15,7 @@ from keep_alive import keep_alive
 from PIL import Image
 from io import BytesIO
 
-client = discord.Client()
+client = discord.Client(activity=discord.Game(name='with Python'))
 
 reddit = praw.Reddit(
     client_id = os.getenv('REDDIT_ID'),
