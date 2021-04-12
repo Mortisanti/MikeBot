@@ -51,8 +51,8 @@ def get_quote():
 
 # Provides a random dad joke
 def get_dadjoke():
-    curl_headers = {'Accept': 'application/json'}
-    response = requests.get('https://icanhazdadjoke.com/', headers=curl_headers)
+    headers = {'Accept': 'application/json'}
+    response = requests.get('https://icanhazdadjoke.com/', headers=headers)
     json_data = json.loads(response.text)
     dadjoke = json_data['joke']
     return dadjoke
@@ -143,7 +143,8 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    user = message.author.display_name
+    display_name = message.author.display_name
+    user_id = message.author.id
     msg = message.content.lower()
 
     # Print list of commands
@@ -153,7 +154,7 @@ async def on_message(message):
     # Inspirational quote
     elif msg.startswith('m!inspire'):
         quote = get_quote()
-        await message.channel.send(f"{user}: {quote}")
+        await message.channel.send(f"{display_name}: {quote}")
 
     # Random dad joke
     elif msg.startswith('m!dadjoke'):
@@ -163,7 +164,7 @@ async def on_message(message):
     # Dirty 8-ball (will probably be retired)
     elif msg.startswith('m!8ball'):
         verdict = get_eightball()
-        await message.channel.send(f"{user}: {verdict}")
+        await message.channel.send(f"{display_name}: {verdict}")
 
     # WoW character model
     elif msg.startswith('m!wowchar'):
@@ -209,10 +210,10 @@ async def on_message(message):
         await message.channel.send('https://gamesfree.today/')
 
     # Easter eggs
-    if 'i love mike' in msg:
+    if 'i love mike' in msg or 'i love you mike' in msg:
         await message.channel.send('https://i.imgur.com/mgVUmum.png')
 
-    elif 'i hate mike' in msg:
+    elif 'i hate mike' in msg or 'i hate you mike' in msg:
         await message.channel.send('https://i.imgur.com/mgVUmum.png')
 
     elif 'whataburger' in msg:
@@ -223,6 +224,9 @@ async def on_message(message):
         
     elif 'mike loves us' in msg:
         await message.channel.send("Yes he does.")
+    # Benny's user ID
+    elif (any(i in msg for i in (' ye ', ' ye', 'ye ', ' noice ', ' noice', 'noice ')) or msg == 'ye' or msg == 'noice') and user_id == 140263709326049280:
+        await message.channel.send("https://tenor.com/view/mexican-kid-gif-5322565")
 
     # Fetch specific message ID in DM with user who uses the command
     # Then delete message
