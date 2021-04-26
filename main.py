@@ -21,22 +21,22 @@ client = discord.Client(activity=discord.Game(name='with Python'))
 
 # Reddit credentials
 reddit = praw.Reddit(
-    client_id = os.getenv('REDDIT_ID'),
-    client_secret = os.getenv('REDDIT_SECRET'),
-    username = os.getenv('REDDIT_USER'),
-    password = os.getenv('REDDIT_PASS'),
-    user_agent = os.getenv('REDDIT_USER_AGENT')
+    client_id = os.environ['REDDIT_ID'],
+    client_secret = os.environ['REDDIT_SECRET'],
+    username = os.environ['REDDIT_USER'],
+    password = os.environ['REDDIT_PASS'],
+    user_agent = os.environ['REDDIT_USER_AGENT']
     )
 
 # Placeholder for list of subreddits to pull submissions from. Currently reworking the command which uses this variable.
-subreddits = os.getenv('SUBREDDITS').split()
+subreddits = os.environ['SUBREDDITS'].split()
 
 # Background task which runs every 5 minutes to update the Blizzard token. Would be nice to not have to use a global variable though.
 async def bg_get_blizz_token():
     await client.wait_until_ready()
     while True:
         curl_data = {'grant_type': 'client_credentials'}
-        get_token = requests.post('https://us.battle.net/oauth/token', data=curl_data, auth=(os.getenv('BLIZZARD_ID'), os.getenv('BLIZZARD_SECRET')))
+        get_token = requests.post('https://us.battle.net/oauth/token', data=curl_data, auth=(os.environ['BLIZZARD_ID'], os.environ['BLIZZARD_SECRET']))
         get_token_json = json.loads(get_token.text)
         global BLIZZARD_TOKEN
         BLIZZARD_TOKEN = get_token_json['access_token']
@@ -146,6 +146,7 @@ async def on_message(message):
     display_name = message.author.display_name
     user_id = message.author.id
     msg = message.content.lower()
+    msg_list = msg.split()
 
     # Print list of commands
     if msg.startswith('m!commands') or msg.startswith('m!help'):
@@ -225,7 +226,7 @@ async def on_message(message):
     elif 'mike loves us' in msg:
         await message.channel.send("Yes he does.")
     # Benny's user ID
-    elif (any(i in msg for i in (' ye ', ' ye', 'ye ', ' noice ', ' noice', 'noice ')) or msg == 'ye' or msg == 'noice') and user_id == 140263709326049280:
+    elif (any(i in msg_list for i in ('ye', 'noice')) or msg == 'ye' or msg == 'noice') and user_id == 140263709326049280:
         await message.channel.send("https://tenor.com/view/mexican-kid-gif-5322565")
 
     # Fetch specific message ID in DM with user who uses the command
@@ -238,4 +239,4 @@ async def on_message(message):
 
 keep_alive()
 client.loop.create_task(bg_get_blizz_token())
-client.run(os.getenv('DISCORD_TOKEN'))
+client.run(os.environ['DISCORD_TOKEN'])
