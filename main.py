@@ -2,6 +2,7 @@
 #TODO Implement other entertaining APIs
 #TODO Add support for non-US realms in get_char_profile() and get_char_media()
 #TODO Make use of Repl.it db in some way
+#TODO CLEAN THIS GUY UP
 
 import discord
 import os
@@ -15,9 +16,11 @@ from bot_vars import eightball_answers, command_list
 from keep_alive import keep_alive
 from PIL import Image
 from io import BytesIO
+from discord_slash import SlashCommand
 
 # Set "Playing" status. Apparently custom statuses do not work for bots (yet?).
-client = discord.Client(activity=discord.Game(name='with Python'))
+bot = discord.Client(activity=discord.Game(name='with Python'), intents=discord.Intents.default())
+slash = SlashCommand(bot, sync_commands=True)
 
 # Reddit credentials
 reddit = praw.Reddit(
@@ -33,7 +36,7 @@ subreddits = os.environ['SUBREDDITS'].split()
 
 # Background task which runs every 5 minutes to update the Blizzard token. Would be nice to not have to use a global variable though.
 async def bg_get_blizz_token():
-    await client.wait_until_ready()
+    await bot.wait_until_ready()
     while True:
         curl_data = {'grant_type': 'client_credentials'}
         get_token = requests.post('https://us.battle.net/oauth/token', data=curl_data, auth=(os.environ['BLIZZARD_ID'], os.environ['BLIZZARD_SECRET']))
@@ -129,18 +132,18 @@ def get_and_crop_img(img_url):
     return final_img
 
 
-@client.event
+@bot.event
 async def on_ready():
-    print(f"We have logged in as {client.user}")
+    print(f"We have logged in as {bot.user}")
     print("We are currently in the following guilds (servers):")
-    for guild in client.guilds:
+    for guild in bot.guilds:
         print(f"{guild.name} - {guild.id}")
     # How to leave a guild (server):
-    # await client.get_guild(id_integer).leave()
+    # await bot.get_guild(id_integer).leave()
 
-@client.event
+@bot.event
 async def on_message(message):
-    if message.author == client.user:
+    if message.author == bot.user:
         return
 
     display_name = message.author.display_name
@@ -237,6 +240,11 @@ async def on_message(message):
     #         the_message = await message.channel.fetch_message(802068665188089876)
     #         await the_message.delete()
 
+
+@slash.slash(name="allcaps", description="Capitalize an entire message.")
+async def test(ctx, message: str):
+  await ctx.send(content=message.upper())
+
 keep_alive()
-client.loop.create_task(bg_get_blizz_token())
-client.run(os.environ['DISCORD_TOKEN'])
+bot.loop.create_task(bg_get_blizz_token())
+bot.run(os.environ['DISCORD_TOKEN'])
