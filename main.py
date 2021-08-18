@@ -14,9 +14,11 @@ import asyncio
 import uuid
 from bot_vars import eightball_answers, command_list
 from keep_alive import keep_alive
+from rt import get_ratings
 from PIL import Image
 from io import BytesIO
 from discord_slash import SlashCommand
+from discord_slash.utils.manage_commands import create_option
 
 # Set "Playing" status. Apparently custom statuses do not work for bots (yet?).
 bot = discord.Client(activity=discord.Game(name='with Python'), intents=discord.Intents.default())
@@ -244,6 +246,33 @@ async def on_message(message):
 @slash.slash(name="allcaps", description="Capitalize an entire message.")
 async def test(ctx, message: str):
   await ctx.send(content=message.upper())
+
+@slash.slash(name="rt", description="Scrape movie ratings from Rotten Tomatoes.")
+async def rt_scrape(ctx, movie: str):
+    footer_icon, link, cover_art, audience_banded_rating_count, audience_rating_copy, audience_score, embed_desc, rating, title, tomatometer_count, tomatometer_score, thumbnail_icon = get_ratings(movie)
+    rt_embed = discord.Embed(
+        type='rich',
+        title=title,
+        description=embed_desc,
+        color=0xfa320a,
+        url=link
+        )
+    rt_embed.set_image(url=cover_art)
+    rt_embed.set_thumbnail(url=thumbnail_icon)
+    rt_embed.add_field(
+        name="Tomatometer",
+        value=f"{tomatometer_score} | {tomatometer_count} Reviews",
+        inline=True
+        )
+    rt_embed.add_field(
+        name="Audience Score",
+        value=f"{audience_score} | {audience_banded_rating_count} {audience_rating_copy}",
+        inline=True
+        )
+    rt_embed.set_footer(icon_url=footer_icon,
+                        text="Copyright © Fandango. All rights reserved."
+                        )
+    await ctx.send(embed=rt_embed)
 
 keep_alive()
 bot.loop.create_task(bg_get_blizz_token())
