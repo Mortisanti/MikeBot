@@ -26,7 +26,7 @@ def get_ratings(media_name: str):
         'N/A': 'https://www.rottentomatoes.com/assets/pizza-pie/images/icons/tomatometer/tomatometer-empty.cd930dab34a.svg',
         'rotten': 'https://www.rottentomatoes.com/assets/pizza-pie/images/icons/tomatometer/tomatometer-rotten.f1ef4f02ce3.svg',
         'fresh': 'https://www.rottentomatoes.com/assets/pizza-pie/images/icons/tomatometer/tomatometer-fresh.149b5e8adc3.svg',
-        'certified_fresh': 'https://www.rottentomatoes.com/assets/pizza-pie/images/icons/tomatometer/certified_fresh.75211285dbb.svg'
+        'certified-fresh': 'https://www.rottentomatoes.com/assets/pizza-pie/images/icons/tomatometer/certified_fresh.75211285dbb.svg'
     }
 
     footer_icon = 'https://www.rottentomatoes.com/assets/pizza-pie/images/favicon.ico'
@@ -54,7 +54,6 @@ def get_ratings(media_name: str):
 
     src = r.text
     link = r.url
-    print(f"URL: {link}")
 
     if media_type == 'm':
         cover_art_matches = re.search(cover_art_regex, src)
@@ -76,9 +75,10 @@ def get_ratings(media_name: str):
         # audience_state = scoreboard['audienceState'] # N/A, spilled, upright
 
         info = scoreboard['info']
-        embed_desc = f"{info}\n\n{plot}"
-
         rating = scoreboard['rating']
+        
+        embed_desc = f"{rating} | {info}\n\n{plot}"
+        
         title = scoreboard['title']
         tomatometer_count = scoreboard['tomatometerCount']
 
@@ -93,4 +93,4 @@ def get_ratings(media_name: str):
     else:
         pass
         # print("TV show stat scraping not yet implemented.")
-    return footer_icon, link, cover_art, audience_banded_rating_count, audience_rating_copy, audience_score, embed_desc, rating, title, tomatometer_count, tomatometer_score, thumbnail_icon
+    return footer_icon, link, cover_art, audience_banded_rating_count, audience_rating_copy, audience_score, embed_desc, title, tomatometer_count, tomatometer_score, thumbnail_icon

@@ -249,7 +249,7 @@ async def test(ctx, message: str):
 
 @slash.slash(name="rt", description="Scrape movie ratings from Rotten Tomatoes.")
 async def rt_scrape(ctx, movie: str):
-    footer_icon, link, cover_art, audience_banded_rating_count, audience_rating_copy, audience_score, embed_desc, rating, title, tomatometer_count, tomatometer_score, thumbnail_icon = get_ratings(movie)
+    footer_icon, link, cover_art, audience_banded_rating_count, audience_rating_copy, audience_score, embed_desc, title, tomatometer_count, tomatometer_score, thumbnail_icon = get_ratings(movie)
     rt_embed = discord.Embed(
         type='rich',
         title=title,
