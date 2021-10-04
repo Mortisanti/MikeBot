@@ -36,6 +36,7 @@ reddit = praw.Reddit(
 # Placeholder for list of subreddits to pull submissions from. Currently reworking the command which uses this variable.
 subreddits = os.environ['SUBREDDITS'].split()
 
+
 # Background task which runs every 5 minutes to update the Blizzard token. Would be nice to not have to use a global variable though.
 async def bg_get_blizz_token():
     await bot.wait_until_ready()
@@ -46,6 +47,7 @@ async def bg_get_blizz_token():
         global BLIZZARD_TOKEN
         BLIZZARD_TOKEN = get_token_json['access_token']
         await asyncio.sleep(300)
+
 
 # Provides a random, inspirational quote
 def get_quote():
@@ -68,7 +70,7 @@ def get_eightball():
     return verdict
 
 # This big, ugly thing grabs WoW armory data on the provided character/realm. In my defense, this function used to have simple variables, but I wanted to make use of a dictionary.
-def get_char_profile(REALM, CHARACTER, BLIZZARD_TOKEN):
+def get_char_profile(CHARACTER, REALM, BLIZZARD_TOKEN):
     char_profile_request = requests.get(f'https://us.api.blizzard.com/profile/wow/character/{REALM}/{CHARACTER}?namespace=profile-us&locale=en_US&access_token={BLIZZARD_TOKEN}')
     if char_profile_request.status_code == 200:
         char_profile_json = json.loads(char_profile_request.text)
@@ -113,7 +115,7 @@ def get_char_profile(REALM, CHARACTER, BLIZZARD_TOKEN):
     return char_profile
 
 # Grabs character portrait and model (with transparent background) from WoW Armory
-def get_char_media(REALM, CHARACTER, BLIZZARD_TOKEN):
+def get_char_media(CHARACTER, REALM, BLIZZARD_TOKEN):
     unique_id = f"?{uuid.uuid4()}"
     char_media_request = requests.get(f'https://us.api.blizzard.com/profile/wow/character/{REALM}/{CHARACTER}/character-media?namespace=profile-us&locale=en_US&access_token={BLIZZARD_TOKEN}')
     if char_media_request.status_code == 200:
@@ -175,10 +177,10 @@ async def on_message(message):
     # WoW character model
     elif msg.startswith('m!wowchar'):
         wowchar_arg = msg.split('m!wowchar ', 1)[1]
-        realm_char_query = wowchar_arg.split('/')
-        REALM = realm_char_query[0].replace('\'', '').replace(' ', '-')
-        CHARACTER = realm_char_query[1]
-        char_media = get_char_media(REALM, CHARACTER, BLIZZARD_TOKEN)
+        char_realm_query = wowchar_arg.split('/')
+        CHARACTER = char_realm_query[0]
+        REALM = char_realm_query[1].replace('\'', '').replace(' ', '-')
+        char_media = get_char_media(CHARACTER, REALM, BLIZZARD_TOKEN)
         if char_media != 'failed':
             await message.channel.send("Processing...")
             final_img = get_and_crop_img(char_media['model'])
@@ -192,11 +194,11 @@ async def on_message(message):
     # WoW character armory and Icy Veins best-in-slot link
     elif msg.startswith('m!armory'):
         armory_arg = msg.split('m!armory ', 1)[1]
-        realm_char_query = armory_arg.split('/')
-        REALM = realm_char_query[0].replace('\'', '').replace(' ', '-')
-        CHARACTER = realm_char_query[1]
-        char_profile = get_char_profile(REALM, CHARACTER, BLIZZARD_TOKEN)
-        char_media = get_char_media(REALM, CHARACTER, BLIZZARD_TOKEN)
+        char_realm_query = armory_arg.split('/')
+        CHARACTER = char_realm_query[0]
+        REALM = char_realm_query[1].replace('\'', '').replace(' ', '-')
+        char_profile = get_char_profile(CHARACTER, REALM, BLIZZARD_TOKEN)
+        char_media = get_char_media(CHARACTER, REALM, BLIZZARD_TOKEN)
 
         if char_profile != 'failed':
             char_embed = discord.Embed(title=char_profile['full_name'], type='rich', color=0x992d22, url=char_profile['armory_url'])
