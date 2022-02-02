@@ -4,12 +4,11 @@ from datetime import datetime, timedelta
 
 # https://www.epicgames.com/store/en-US/free-games
 
-# url = 'https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US'
-# headers = { 'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0' }
-# r = requests.get(url, headers=headers)
-# 
-# with open('egpromos.json', 'w') as f:
-#     f.write(r.text)
+url = 'https://store-site-backend-static-ipv4.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US'
+headers = { 'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:94.0) Gecko/20100101 Firefox/94.0' }
+r = requests.get(url, headers=headers)
+with open('egpromos.json', 'w') as f:
+    f.write(r.text)
 
 with open('egpromos.json', 'r') as f:
     data = json.loads(f.read())

@@ -1,17 +1,5 @@
 eightball_answers = [
-  "Abso-fucking-lutely.",
-  "You bet your sweet ass.",
-  "Damn straight.",
-  "No shit.",
-  "No fucking clue.",
-  "Who gives a shit?",
-  "'Thefuck do you think?'",
-  "Don't know, don't care.",
-  "Does a duck with a boner drag weeds?",
-  "Fuck no.",
-  "Fat chance, asshole.",
-  "Doubtful as fuck.",
-  "You're shit out of luck."
+  "Placeholder for custom eighball responses."
 ]
 
 command_list = '''
